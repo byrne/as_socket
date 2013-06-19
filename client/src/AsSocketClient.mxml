@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   width="500" height="400" minWidth="500" minHeight="500">
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.events.Event;
+			import flash.events.IOErrorEvent;
+			import flash.events.MouseEvent;
+			import flash.events.ProgressEvent;
+			import flash.events.SecurityErrorEvent;
+			import flash.net.Socket;
+			import flash.utils.ByteArray;
+			
+			
+			private var localIP:String="192.168.2.102";
+			private var localPort:int=8888;
+			private var socket:Socket;
+			
+			
+			protected function bt_conn_clickHandler(event:MouseEvent):void
+			{   socket=new Socket();
+				socket.connect(localIP,localPort);
+				socket.addEventListener(Event.CONNECT,onconnect);
+				socket.addEventListener(IOErrorEvent.IO_ERROR,onError);
+				socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR,onseError);
+				socket.addEventListener(ProgressEvent.SOCKET_DATA,onData);
+			}
+			private function onconnect(e:Event):void{
+				log("连接成功");
+				
+			}
+			
+			private function onError(e:IOErrorEvent):void{
+				log("连接失败,服务器没打开!")
+			}
+			private function onseError(e:SecurityErrorEvent):void{
+				log("连接失败，安全错误"+e.text)
+			}
+			//按钮发送
+			protected function bt_send_clickHandler(event:MouseEvent):void
+			{   
+				sendmsg()
+			}
+			//接收到消息
+			protected function onData(e:ProgressEvent):void{
+				var ba:ByteArray=new ByteArray()
+				var tmpsocket:Socket=e.target as Socket;
+				tmpsocket.readBytes(ba,0,tmpsocket.bytesAvailable);
+				log(ba.toString());
+				
+				
+			}
+			//发送消息;
+			private function sendmsg():void{
+				if(text_input.text!=""){
+					socket.writeUTFBytes(text_input.text)
+					socket.flush();
+					
+					text_input.text="";
+				}else{
+					log("不能发送空消息");
+				} 
+			}
+			//显示消息
+			private function log(str:String):void{
+				text_msg.appendText(str+"\n")
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Button id="bt_conn" x="10" y="348" label="连接" click="bt_conn_clickHandler(event)"/>
+	<s:Button id="bt_send" x="381" y="352" label="发送" click="bt_send_clickHandler(event)"/>
+	<s:TextInput id="text_input" x="122" y="319" width="251" height="54" enabled="true"
+				 enter="sendmsg()" prompt="输入消息"/>
+	<s:TextArea id="text_msg" x="121" y="93" width="209" height="192" editable="false"
+				enabled="true"/>
+</s:Application>
+
+
